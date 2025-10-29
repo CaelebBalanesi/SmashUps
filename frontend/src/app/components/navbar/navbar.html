@@ -1,0 +1,22 @@
+<nav class="navbar">
+    <div class="navbar-logo">
+        <img src="./logo.png" alt="Smashups Logo" />
+    </div>
+    <ul>
+        <li><a [routerLink]="['/home']">Home</a></li>
+        <li><a [routerLink]="['/history']">History</a></li>
+    </ul>
+    <div class="navbar-actions">
+        @if (user) {
+        <div class="user-info">
+            <img [routerLink]="['/profile']" [src]="avatarUrl" class="avatar" />
+            <span class="username">{{ user.username }}</span>
+            <button class="logout-btn" (click)="logout()">Logout</button>
+        </div>
+        } @else {
+        <button (click)="loginWithDiscord()" class="btn btn-primary">
+            Login with Discord
+        </button>
+        }
+    </div>
+</nav>
