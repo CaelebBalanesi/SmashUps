@@ -1,11 +1,54 @@
-export interface User {
-  discordId: string;
-  dateJoined: number;
-  username: string;
-  discriminator: string;
-  email?: string;
-  avatar?: string;
-  main?: string;
+import { DataTypes, Model } from 'sequelize';
+import { sequelize } from '../database/database';
+
+export class User extends Model {
+  public discordId!: string;
+  public username!: string;
+  public discriminator!: string;
+  public email?: string;
+  public avatar?: string;
+  public main?: string;
+  public dateJoined!: number;
 }
 
-export const users: User[] = [];
+User.init(
+  {
+    discordId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    username: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    discriminator: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    avatar: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    main: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    dateJoined: {
+      type: DataTypes.BIGINT,
+      allowNull: false,
+      defaultValue: () => Date.now(),
+    },
+  },
+  {
+    sequelize,
+    tableName: 'users',
+    timestamps: false,
+  },
+);
+
+sequelize.sync();

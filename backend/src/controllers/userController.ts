@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { users, User } from '../models/user';
+import { User } from '../models/user';
 
-export const createUser = (req: Request, res: Response, next: NextFunction) => {
+export const createUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const discordUser = req.body.discordUser;
 
@@ -9,10 +13,10 @@ export const createUser = (req: Request, res: Response, next: NextFunction) => {
       return res.status(400).json({ message: 'Missing Discord user data' });
     }
 
-    let user = users.find((u) => u.discordId === discordUser.id);
+    let user = await User.findOne({ where: { discordId: discordUser.id } });
 
     if (user) {
-      Object.assign(user, {
+      await user.update({
         username: discordUser.username,
         discriminator: discordUser.discriminator,
         email: discordUser.email,
@@ -21,38 +25,41 @@ export const createUser = (req: Request, res: Response, next: NextFunction) => {
       return res.status(200).json(user);
     }
 
-    const newUser: User = {
+    const newUser = await User.create({
       discordId: discordUser.id,
-      dateJoined: Date.now(),
       username: discordUser.username,
       discriminator: discordUser.discriminator,
       email: discordUser.email,
       avatar: discordUser.avatar,
-    };
+    });
 
-    users.push(newUser);
     res.status(201).json(newUser);
   } catch (error) {
     next(error);
   }
 };
 
-export const getUsers = (req: Request, res: Response, next: NextFunction) => {
+export const getUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    res.json(users);
+    const allUsers = await User.findAll();
+    res.json(allUsers);
   } catch (error) {
     next(error);
   }
 };
 
-export const getUserByDiscordId = (
+export const getUserByDiscordId = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
     const { discordId } = req.params;
-    const user = users.find((u) => u.discordId === discordId);
+    const user = await User.findOne({ where: { discordId } });
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
   } catch (error) {
@@ -60,56 +67,64 @@ export const getUserByDiscordId = (
   }
 };
 
-export const updateUser = (req: Request, res: Response, next: NextFunction) => {
+export const updateUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { discordId } = req.params;
-    const user = users.find((u) => u.discordId === discordId);
+    const user = await User.findOne({ where: { discordId } });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    Object.assign(user, req.body);
+    await user.update(req.body);
     res.json(user);
   } catch (error) {
     next(error);
   }
 };
 
-export const setMain = (req: Request, res: Response, next: NextFunction) => {
+export const setMain = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const discordId = (req as any).discordId as string;
-    console.log('Discord ID from JWT:', discordId);
-    console.log('Current users:', users);
     const { main } = req.body;
 
     if (!discordId) return res.status(401).json({ message: 'Unauthorized' });
-    if (!main) return res.status(400).json({ message: 'Missing main' });
+    if (!main) return res.status(400).json({ message: 'Missing main value' });
 
-    const user = users.find((u) => u.discordId === discordId);
+    const user = await User.findOne({ where: { discordId } });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    user.main = main;
+    await user.update({ main });
+
     res.json(user);
   } catch (error) {
     next(error);
   }
 };
 
-export const deleteUser = (req: Request, res: Response, next: NextFunction) => {
+export const deleteUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const discordId = (req as any).discordId as string;
     const { discordId: targetId } = req.params;
 
     if (!discordId) return res.status(401).json({ message: 'Unauthorized' });
     if (discordId !== targetId)
-      return res
-        .status(403)
-        .json({ message: 'Forbidden: Cannot delete another user' });
+      return res.status(403).json({ message: 'Cannot delete another user' });
 
-    const index = users.findIndex((u) => u.discordId === targetId);
-    if (index === -1)
-      return res.status(404).json({ message: 'User not found' });
+    const user = await User.findOne({ where: { discordId: targetId } });
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const deletedUser = users.splice(index, 1)[0];
-    res.json(deletedUser);
+    await user.destroy();
+    res.json(user);
   } catch (error) {
     next(error);
   }

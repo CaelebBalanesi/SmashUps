@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import { Router } from 'express';
 import config from '../config/config';
+import { User } from '../models/user';
 
 const router = Router();
 
@@ -33,22 +34,42 @@ router.get('/discord/callback', async (req, res) => {
     );
 
     const accessToken = tokenResponse.data.access_token;
+
     const userResponse = await axios.get('https://discord.com/api/users/@me', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
     const discordUser = userResponse.data;
 
+    let user = await User.findOne({ where: { discordId: discordUser.id } });
+    if (!user) {
+      user = await User.create({
+        discordId: discordUser.id,
+        username: discordUser.username,
+        discriminator: discordUser.discriminator,
+        email: discordUser.email,
+        avatar: discordUser.avatar,
+      });
+    } else {
+      await user.update({
+        username: discordUser.username,
+        discriminator: discordUser.discriminator,
+        email: discordUser.email,
+        avatar: discordUser.avatar,
+      });
+    }
+
     const token = jwt.sign(
       {
-        id: discordUser.id,
-        username: discordUser.username,
-        avatar: discordUser.avatar,
-        email: discordUser.email,
+        id: user.discordId,
+        username: user.username,
+        avatar: user.avatar,
+        email: user.email,
       },
       config.jwtSecret,
-      { expiresIn: '1h' },
+      { expiresIn: '14d' },
     );
+
     res.redirect(`${config.frontendUrl}/auth_success?token=${token}`);
   } catch (error) {
     console.error(error);

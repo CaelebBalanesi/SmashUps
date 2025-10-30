@@ -7,7 +7,7 @@ import {
   deleteUser,
   setMain,
 } from '../controllers/userController';
-import { requireUserId } from '../middlewares/requireUser';
+import { authenticateJWT } from '../middlewares/auth';
 
 const router = express.Router();
 
@@ -18,7 +18,7 @@ router.get('/:discordId', getUserByDiscordId);
 router.put('/:discordId', updateUser);
 
 // Authenticated routes
-router.delete('/:discordId', requireUserId, deleteUser);
-router.post('/set-main', requireUserId, setMain);
+router.delete('/:discordId', authenticateJWT, deleteUser);
+router.post('/set-main', authenticateJWT, setMain);
 
 export default router;
