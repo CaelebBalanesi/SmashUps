@@ -4,7 +4,7 @@ import config from '../config/config';
 import { User } from '../models/user';
 
 interface JwtPayload {
-  id: string; // discordId
+  id: string;
   username: string;
   avatar?: string;
   email?: string;

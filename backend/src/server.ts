@@ -1,6 +1,12 @@
-import app from "./app";
-import config from "./config/config";
+import http from 'http';
+import app from './app';
+import config from './config/config';
+import { initMatchSocket } from './controllers/matchController';
 
-app.listen(config.port, () => {
+const server = http.createServer(app);
+
+initMatchSocket(server);
+
+server.listen(config.port, () => {
   console.log(`Server running on port ${config.port}`);
 });

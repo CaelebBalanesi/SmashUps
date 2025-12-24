@@ -1,6 +1,7 @@
-import { Injectable } from "@angular/core";
+import { Injectable, OnDestroy } from "@angular/core";
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { BehaviorSubject, Observable, of, tap } from "rxjs";
+import { io, Socket } from "socket.io-client";
 
 export interface User {
   discordId: string;
@@ -11,20 +12,42 @@ export interface User {
   main?: string;
 }
 
+export interface MatchOpponent {
+  id: string;
+  username: string;
+  avatar?: string;
+  main: string;
+}
+
 @Injectable({
   providedIn: "root",
 })
-export class Api {
+export class Api implements OnDestroy {
   private apiUrl = "http://localhost:3000";
   private userSubject = new BehaviorSubject<User | null>(null);
   user$ = this.userSubject.asObservable();
 
+  // --- WebSocket ---
+  private socket: Socket | null = null;
+  private matchSubject = new BehaviorSubject<MatchOpponent | null>(null);
+  private searchingSubject = new BehaviorSubject<boolean>(false);
+  private searchMessageSubject = new BehaviorSubject<string>("");
+
+  match$ = this.matchSubject.asObservable();
+  searching$ = this.searchingSubject.asObservable();
+  searchMessage$ = this.searchMessageSubject.asObservable();
+
   constructor(private http: HttpClient) {
     const token = localStorage.getItem("jwt");
     if (token) this.fetchUserProfile().subscribe();
+    this.initializeSocket();
   }
 
-  // AUTH
+  ngOnDestroy() {
+    this.socket?.disconnect();
+  }
+
+  // ===== AUTH =====
 
   private getAuthHeaders(): HttpHeaders | null {
     const token = localStorage.getItem("jwt");
@@ -47,11 +70,13 @@ export class Api {
   setToken(token: string) {
     localStorage.setItem("jwt", token);
     this.fetchUserProfile().subscribe();
+    this.initializeSocket(); // reconnect with new token
   }
 
   clearUser() {
     localStorage.removeItem("jwt");
     this.userSubject.next(null);
+    this.socket?.disconnect();
   }
 
   getUser(): User | null {
@@ -62,7 +87,7 @@ export class Api {
     this.userSubject.next(user);
   }
 
-  // USER MANAGEMENT
+  // ===== USER MANAGEMENT =====
 
   getUsers(): Observable<User[]> {
     return this.http.get<User[]>(`${this.apiUrl}/api/users`);
@@ -85,13 +110,70 @@ export class Api {
 
   setMain(main: string): Observable<User | null> {
     const token = localStorage.getItem("jwt");
-    console.log("JWT:", token, "Main:", main);
-
     if (!token) return of(null);
 
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     return this.http
       .post<User>(`${this.apiUrl}/users/set-main`, { main }, { headers })
       .pipe(tap((user) => this.setUser(user)));
+  }
+
+  // ===== MATCHMAKING =====
+
+  private initializeSocket() {
+    const token = localStorage.getItem("jwt");
+    if (!token) return;
+
+    if (this.socket && this.socket.connected) return;
+
+    this.socket = io(this.apiUrl, { transports: ["websocket"] });
+
+    this.socket.on("connect", () => {
+      console.log("🔌 Connected to match server");
+      this.socket?.emit("authenticate", token);
+    });
+
+    this.socket.on("authenticated", (data) => {
+      if (data.success) {
+        console.log("✅ Socket authenticated:", data.user);
+      } else {
+        console.warn("❌ Socket authentication failed");
+      }
+    });
+
+    this.socket.on("searching", (data) => {
+      this.searchingSubject.next(true);
+      this.searchMessageSubject.next(data.message);
+    });
+
+    this.socket.on("matchFound", (data) => {
+      this.searchingSubject.next(false);
+      this.searchMessageSubject.next("");
+      this.matchSubject.next(data.opponent);
+      console.log("🎯 Match found:", data.opponent);
+    });
+
+    this.socket.on("searchStopped", () => {
+      this.searchingSubject.next(false);
+      this.searchMessageSubject.next("Search stopped");
+    });
+
+    this.socket.on("disconnect", () => {
+      console.log("❎ Disconnected from match server");
+      this.searchingSubject.next(false);
+    });
+
+    this.socket.on("error", (msg) => {
+      console.error("⚠️ Match socket error:", msg);
+    });
+  }
+
+  startSearch(main: string, lookingFor: string[]) {
+    if (!this.socket?.connected) this.initializeSocket();
+    this.socket?.emit("startSearch", { main, lookingFor });
+  }
+
+  stopSearch() {
+    this.socket?.emit("stopSearch");
   }
 }

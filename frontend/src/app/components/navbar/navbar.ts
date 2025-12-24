@@ -1,5 +1,5 @@
 import { Component, OnInit } from "@angular/core";
-import { Api } from "../../services/api";
+import { Api, User } from "../../services/api";
 import { RouterLink } from "@angular/router";
 
 @Component({
@@ -9,12 +9,13 @@ import { RouterLink } from "@angular/router";
   styleUrl: "./navbar.scss",
 })
 export class Navbar {
-  user: any = null;
+  user: User | null = null;
 
   constructor(private api: Api) {}
 
   ngOnInit() {
     this.api.user$.subscribe((user) => {
+      console.log(user);
       this.user = user;
     });
   }
@@ -29,6 +30,7 @@ export class Navbar {
 
   get avatarUrl(): string {
     if (!this.user) return "";
-    return `https://cdn.discordapp.com/avatars/${this.user.id}/${this.user.avatar}.png`;
+    // console.log(`${this.user.discordId}/${this.user.avatar}`);
+    return `https://cdn.discordapp.com/avatars/${this.user.discordId}/${this.user.avatar}.png`;
   }
 }

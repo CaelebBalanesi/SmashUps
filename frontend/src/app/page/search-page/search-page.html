@@ -1,0 +1,42 @@
+<div class="page">
+  <h1>Select Characters to Play Against</h1>
+
+  <app-character-select
+    [characters]="characters"
+    (selected)="addCharacter($event)"
+  ></app-character-select>
+
+  @if (selectedCharacters.length) {
+  <div class="selected-characters">
+    @for (char of selectedCharacters; track $index) {
+    <div class="char-icon" (click)="removeCharacter($index)">
+      <img [src]="char.icon" [alt]="char.name" />
+      <span>{{ char.name }}</span>
+    </div>
+    }
+  </div>
+
+  <div class="actions">
+    <button (click)="startSearch()" [disabled]="searching">
+      {{ searching ? "Searching..." : "Start Search" }}
+    </button>
+    @if (searching) {
+    <button class="stop" (click)="stopSearch()">Stop</button>
+    }
+  </div>
+  } @if (match) {
+  <div class="match-result">
+    <h2>Match Found!</h2>
+    <div class="opponent">
+      <img
+        (click)="openDiscordProfile(match.id)"
+        [src]="getAvatarUrl(match)"
+        [alt]="match.username"
+      />
+      <p>{{ match.username }} — {{ match.main }}</p>
+    </div>
+  </div>
+  }
+
+  <p [class]="messageType">{{ searchMessage }}</p>
+</div>

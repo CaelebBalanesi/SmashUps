@@ -1,104 +1,103 @@
-/* General page layout */
-.profile,
-.login-prompt {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background: #1f1f1f;
-    border-radius: 16px;
-    color: #fff;
-    text-align: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+.profile {
+  max-width: 700px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background: #1c1c1c;
+  color: #fff;
+  border-radius: 1.25rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  text-align: center;
+
+  h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    color: #aaa;
+    margin-bottom: 1.25rem;
+  }
 }
 
-/* Header */
-.profile h1 {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-}
+.main-selection-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #2a2a2a;
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
 
-/* Paragraphs */
-.profile p,
-.login-prompt p {
-    font-size: 1rem;
-    margin-bottom: 1.5rem;
-    color: #ccc;
-}
+  app-character-select {
+    flex: 1 1 auto;
+    min-width: 0; // prevents overflow
+  }
 
-/* Character grid */
-.char-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-/* Individual character cards */
-.char-grid > div {
-    background: #2a2a2a;
-    border-radius: 12px;
-    padding: 1rem;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
+  .character-preview {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 0.25rem;
+    flex-shrink: 0;
+
+    .character-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #4caf50;
+      transition: transform 0.15s ease-in-out;
+
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
+
+    .char-name {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #ddd;
+    }
+  }
 }
 
-.char-grid > div img {
-    width: 64px;
-    height: 64px;
-    margin-bottom: 0.5rem;
+.save-btn {
+  margin-top: 1.5rem;
+  border: none;
+  padding: 0.6rem 1.8rem;
+  font-size: 1rem;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
-.char-grid > div span {
-    font-weight: 500;
-    color: #fff;
-}
-
-/* Selected character highlight */
-.char-grid > div.selected {
-    border: 2px solid #ff4757;
-    background: #3b3b3b;
-    transform: scale(1.05);
-}
-
-/* Buttons */
-.save-btn,
-.login-prompt button {
-    background: #ff4757;
-    color: #fff;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition:
-        background 0.2s ease-in-out,
-        transform 0.2s ease-in-out;
-}
-
-.save-btn:disabled {
-    background: #555;
-    cursor: not-allowed;
-}
-
-.save-btn:hover:not(:disabled),
-.login-prompt button:hover {
-    background: #ff6b81;
-    transform: translateY(-2px);
-}
-
-/* Message text */
 .message {
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    color: #1dd1a1;
+  margin-top: 1rem;
+  font-style: italic;
+  color: #aaa;
 }
 
-/* Login prompt link */
-.login-prompt button {
-    text-decoration: none;
-    display: inline-block;
+.login-prompt {
+  text-align: center;
+  margin-top: 3rem;
+  color: #ddd;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .main-selection-wrapper {
+    flex-direction: column;
+    align-items: center;
+
+    .character-preview {
+      margin-top: 0.75rem;
+
+      .character-icon {
+        width: 45px;
+        height: 45px;
+      }
+    }
+  }
 }

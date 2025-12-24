@@ -1,0 +1,22 @@
+<div class="select-wrapper">
+  <input
+    type="text"
+    placeholder="Search characters..."
+    [(ngModel)]="searchTerm"
+    (focus)="dropdownOpen = true"
+    (blur)="closeDropdown()"
+    class="char-search"
+  />
+  @if (dropdownOpen) {
+  <div class="dropdown" (mousedown)="$event.preventDefault()">
+    @for(char of filteredCharacters(); track $index) {
+    <div class="dropdown-item" (click)="selectCharacter(char)">
+      <img [src]="char.icon" [alt]="char.name" />
+      <span>{{ char.name }}</span>
+    </div>
+    } @if (filteredCharacters().length === 0) {
+    <div class="no-results">No characters found</div>
+    }
+  </div>
+  }
+</div>

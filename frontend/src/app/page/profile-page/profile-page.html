@@ -1,37 +1,41 @@
 @if (user) {
 <div class="profile">
-    <h1>Hey {{ user.username }}</h1>
-    <p>Select your main Smash character:</p>
+  <h1>{{ user.username }}</h1>
+  <p>Select your main Smash character:</p>
 
-    <div class="char-grid">
-        @for (char of characters; track $index) {
-        <div
-            (click)="selectMain(char)"
-            [class.selected]="selectedMain?.name === char.name"
-        >
-            <img [src]="char.icon" [alt]="char.name" />
-            <span>{{ char.name }}</span>
-        </div>
-        }
+  <div class="main-selection-wrapper">
+    <app-character-select
+      [characters]="characters"
+      (selected)="selectMain($event)"
+    ></app-character-select>
+
+    @if (selectedMain) {
+    <div class="character-preview">
+      <img
+        class="character-icon"
+        [src]="selectedMain.icon"
+        [alt]="selectedMain.name"
+      />
+      <span class="char-name">{{ selectedMain.name }}</span>
     </div>
-
-    <button
-        class="save-btn"
-        [disabled]="!selectedMain || saving"
-        (click)="saveMain()"
-    >
-        {{ saving ? "Saving..." : "Save Main" }}
-    </button>
-
-    @if (message) {
-    <p class="message">{{ message }}</p>
     }
+  </div>
+
+  <button
+    class="save-btn"
+    [disabled]="!selectedMain || saving"
+    (click)="saveMain()"
+  >
+    {{ saving ? "Saving..." : "Save" }}
+  </button>
+
+  @if (message) {
+  <p class="message">{{ message }}</p>
+  }
 </div>
 } @else {
 <div class="login-prompt">
-    <p>You must log in with Discord to set your main.</p>
-    <button href="http://localhost:3000/auth/discord">
-        Login with Discord
-    </button>
+  <p>You must log in with Discord to set your main.</p>
+  <button (click)="loginWithDiscord()">Login with Discord</button>
 </div>
 }
