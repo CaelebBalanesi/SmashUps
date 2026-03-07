@@ -51,5 +51,3 @@ User.init(
     timestamps: false,
   },
 );
-
-sequelize.sync();

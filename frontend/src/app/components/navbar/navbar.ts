@@ -15,7 +15,6 @@ export class Navbar {
 
   ngOnInit() {
     this.api.user$.subscribe((user) => {
-      console.log(user);
       this.user = user;
     });
   }
@@ -30,7 +29,6 @@ export class Navbar {
 
   get avatarUrl(): string {
     if (!this.user) return "";
-    // console.log(`${this.user.discordId}/${this.user.avatar}`);
     return `https://cdn.discordapp.com/avatars/${this.user.discordId}/${this.user.avatar}.png`;
   }
 }

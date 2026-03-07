@@ -41,7 +41,7 @@ export class SearchPage {
       const temp_message = this.searchMessage;
       this.searchMessage = "You cannot remove characters while searching!";
       this.messageType = "error-message";
-      setInterval(() => {
+      setTimeout(() => {
         this.searchMessage = temp_message;
         this.messageType = "message";
       }, 3000);
@@ -57,7 +57,6 @@ export class SearchPage {
     }
 
     const lookingFor = this.selectedCharacters.map((c) => c.name);
-    console.log("Starting search:", this.userMain, lookingFor);
     this.api.startSearch(this.userMain, lookingFor);
   }
 

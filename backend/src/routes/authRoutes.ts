@@ -1,14 +1,13 @@
-import express from 'express';
 import axios from 'axios';
-import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import { Router } from 'express';
 import config from '../config/config';
 import { User } from '../models/user';
+import { authenticateJWT } from '../middlewares/auth';
 
 const router = Router();
 
-router.get('/discord', (req, res) => {
+router.get('/discord', (_req, res) => {
   const authUrl = `https://discord.com/oauth2/authorize?client_id=${config.discordClientID}&redirect_uri=${encodeURIComponent(
     config.redirectURI,
   )}&response_type=code&scope=identify%20email`;
@@ -77,23 +76,8 @@ router.get('/discord/callback', async (req, res) => {
   }
 });
 
-router.get('/profile', async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ error: 'Missing token' });
-
-  const token = authHeader.split(' ')[1];
-
-  try {
-    const decoded = jwt.verify(token, config.jwtSecret) as { id: string };
-    const user = await User.findOne({ where: { discordId: decoded.id } });
-
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    res.json(user);
-  } catch (err) {
-    console.error('Profile fetch error:', err);
-    res.status(403).json({ error: 'Invalid or expired token' });
-  }
+router.get('/profile', authenticateJWT, (req, res) => {
+  res.json(req.user);
 });
 
 export default router;

@@ -8,8 +8,15 @@ interface JwtPayload {
   username: string;
   avatar?: string;
   email?: string;
-  iat: number;
-  exp: number;
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: User;
+      discordId?: string;
+    }
+  }
 }
 
 export const authenticateJWT = async (
@@ -25,19 +32,15 @@ export const authenticateJWT = async (
     if (!token) return res.status(401).json({ error: 'Invalid token format' });
 
     const decoded = jwt.verify(token, config.jwtSecret) as JwtPayload;
-    if (!decoded || !decoded.id)
-      return res.status(401).json({ error: 'Invalid token' });
 
-    // Fetch the user from the database
     const user = await User.findOne({ where: { discordId: decoded.id } });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    (req as any).user = user;
-    (req as any).discordId = user.discordId;
+    req.user = user;
+    req.discordId = user.discordId;
 
     next();
-  } catch (error) {
-    console.error('JWT Authentication error:', error);
+  } catch {
     return res.status(403).json({ error: 'Invalid or expired token' });
   }
 };

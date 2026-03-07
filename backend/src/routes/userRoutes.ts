@@ -1,6 +1,5 @@
-import express from 'express';
+import { Router } from 'express';
 import {
-  createUser,
   getUsers,
   getUserByDiscordId,
   updateUser,
@@ -9,15 +8,14 @@ import {
 } from '../controllers/userController';
 import { authenticateJWT } from '../middlewares/auth';
 
-const router = express.Router();
+const router = Router();
 
 // Public routes
-router.post('/', createUser);
 router.get('/', getUsers);
 router.get('/:discordId', getUserByDiscordId);
-router.put('/:discordId', updateUser);
 
 // Authenticated routes
+router.put('/:discordId', authenticateJWT, updateUser);
 router.delete('/:discordId', authenticateJWT, deleteUser);
 router.post('/set-main', authenticateJWT, setMain);
 
