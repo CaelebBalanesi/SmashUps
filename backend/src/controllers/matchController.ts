@@ -9,6 +9,7 @@ import {
   cancelReadyCheckForUser,
   READY_TIMEOUT_MS,
 } from '../services/readyCheck';
+import { MatchHistory } from '../models/matchHistory';
 
 interface UserSession {
   userId: string;
@@ -45,6 +46,18 @@ export const initMatchSocket = (server: HttpServer) => {
         {
           onConfirmed: () => {
             io.to(socketId).emit('matchConfirmed', { opponent });
+            const s = userMap.get(socketId);
+            if (s) {
+              MatchHistory.create({
+                playerDiscordId: s.userId,
+                opponentDiscordId: opponent.id,
+                opponentUsername: opponent.username,
+                opponentAvatar: opponent.avatar ?? null,
+                opponentMain: opponent.main,
+                playerMain: searchParams.main,
+                matchedAt: Date.now(),
+              }).catch((err) => console.error('Failed to save match history:', err));
+            }
           },
           onDeclined: () => {
             io.to(socketId).emit('matchDeclined', {

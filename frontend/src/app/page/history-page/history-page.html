@@ -1,0 +1,68 @@
+<div class="history-container">
+  <p-card>
+    <ng-template #header>
+      <div class="history-header">
+        <h1>Match History</h1>
+        <p>Everyone you've been matched with</p>
+      </div>
+    </ng-template>
+
+    <ng-template #content>
+      @if (!user) {
+        <p-message severity="info" [style]="{ width: '100%' }">
+          Please log in to view your match history.
+        </p-message>
+      } @else if (loading) {
+        <div class="loading-state">
+          <p-progressspinner
+            strokeWidth="4"
+            animationDuration=".8s"
+            [style]="{ width: '36px', height: '36px' }"
+          />
+        </div>
+      } @else if (history.length === 0) {
+        <div class="empty-state">
+          <i class="pi pi-clock empty-icon"></i>
+          <p>No matches yet. <a routerLink="/search">Find someone to play!</a></p>
+        </div>
+      } @else {
+        <ul class="history-list">
+          @for (entry of history; track entry.id) {
+            <li class="history-entry" (click)="openDiscordProfile(entry.opponentDiscordId)">
+              <p-avatar
+                [image]="getAvatarUrl(entry.opponentDiscordId, entry.opponentAvatar)"
+                shape="circle"
+                size="large"
+                class="entry-avatar"
+              />
+              <div class="entry-details">
+                <span class="entry-username">{{ entry.opponentUsername }}</span>
+                <div class="entry-mains">
+                  <span class="main-label">Their main:</span>
+                  <span class="main-value">
+                    @if (getMainIcon(entry.opponentMain)) {
+                      <img [src]="getMainIcon(entry.opponentMain)" [alt]="entry.opponentMain" width="16" height="16" />
+                    }
+                    {{ entry.opponentMain }}
+                  </span>
+                  <span class="main-separator">·</span>
+                  <span class="main-label">Your main:</span>
+                  <span class="main-value">
+                    @if (getMainIcon(entry.playerMain)) {
+                      <img [src]="getMainIcon(entry.playerMain)" [alt]="entry.playerMain" width="16" height="16" />
+                    }
+                    {{ entry.playerMain }}
+                  </span>
+                </div>
+              </div>
+              <div class="entry-meta">
+                <span class="entry-date">{{ formatDate(entry.matchedAt) }}</span>
+                <i class="pi pi-arrow-up-right open-icon"></i>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </ng-template>
+  </p-card>
+</div>

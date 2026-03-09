@@ -19,6 +19,17 @@ export interface MatchOpponent {
   main: string;
 }
 
+export interface MatchHistoryEntry {
+  id: number;
+  playerDiscordId: string;
+  opponentDiscordId: string;
+  opponentUsername: string;
+  opponentAvatar?: string;
+  opponentMain: string;
+  playerMain: string;
+  matchedAt: number;
+}
+
 export interface PendingMatch {
   matchId: string;
   opponent: MatchOpponent;
@@ -114,6 +125,12 @@ export class Api implements OnDestroy {
             this.setUser(user);
         }),
       );
+  }
+
+  getMatchHistory(): Observable<MatchHistoryEntry[]> {
+    const user = this.getUser();
+    if (!user) return of([]);
+    return this.http.get<MatchHistoryEntry[]>(`${this.apiUrl}/users/${user.discordId}/history`);
   }
 
   setMain(main: string): Observable<User | null> {

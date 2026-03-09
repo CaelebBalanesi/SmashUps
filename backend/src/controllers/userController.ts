@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '../models/user';
+import { MatchHistory } from '../models/matchHistory';
 
 export const getUsers = async (
   _req: Request,
@@ -24,6 +25,27 @@ export const getUserByDiscordId = async (
     const user = await User.findOne({ where: { discordId } });
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Requires authenticateJWT — self-only
+export const getMatchHistory = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { discordId } = req.params;
+    if (req.discordId !== discordId)
+      return res.status(403).json({ message: 'Cannot view another user\'s history' });
+
+    const history = await MatchHistory.findAll({
+      where: { playerDiscordId: discordId },
+      order: [['matchedAt', 'DESC']],
+    });
+    res.json(history);
   } catch (error) {
     next(error);
   }
