@@ -2,6 +2,7 @@ import { SlashCommandBuilder, ChatInputCommandInteraction, AutocompleteInteracti
 import { User } from '../../models/user';
 import { CHARACTER_NAMES } from '../../data/characters';
 import { BotCommand } from '../types';
+import { COLORS, avatarUrl, base } from '../embeds';
 
 export const setMainCommand: BotCommand = {
   data: new SlashCommandBuilder()
@@ -19,20 +20,38 @@ export const setMainCommand: BotCommand = {
     await interaction.deferReply({ ephemeral: true });
 
     const character = interaction.options.getString('character', true);
+    const { id, avatar } = interaction.user;
 
     if (!CHARACTER_NAMES.includes(character)) {
-      await interaction.editReply('Invalid character. Please select one from the autocomplete list.');
+      const embed = base(COLORS.danger)
+        .setTitle('❌ Invalid Character')
+        .setDescription('Please select a character from the autocomplete list.');
+      await interaction.editReply({ embeds: [embed] });
       return;
     }
 
-    const user = await User.findOne({ where: { discordId: interaction.user.id } });
+    const user = await User.findOne({ where: { discordId: id } });
     if (!user) {
-      await interaction.editReply('You are not registered. Use `/register` first.');
+      const embed = base(COLORS.danger)
+        .setTitle('❌ Not Registered')
+        .setDescription('You need to register first. Use `/register` to get started.');
+      await interaction.editReply({ embeds: [embed] });
       return;
     }
 
+    const previous = user.main;
     await user.update({ main: character });
-    await interaction.editReply(`Your main is now set to **${character}**!`);
+
+    const embed = base(COLORS.success)
+      .setTitle('✅ Main Updated')
+      .setThumbnail(avatarUrl(id, avatar))
+      .addFields(
+        { name: '🎮 New Main', value: character, inline: true },
+        ...(previous ? [{ name: '🔄 Previous', value: previous, inline: true }] : []),
+      )
+      .setDescription('Your main has been updated. Ready to `/search`?');
+
+    await interaction.editReply({ embeds: [embed] });
   },
 
   async autocomplete(interaction: AutocompleteInteraction) {

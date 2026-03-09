@@ -10,50 +10,88 @@ import {
   Message,
 } from 'discord.js';
 import { User } from '../../models/user';
+import { MatchHistory } from '../../models/matchHistory';
 import { CHARACTER_NAMES } from '../../data/characters';
 import { enterPool, isInPool, OpponentInfo } from '../../services/matchmaking';
 import { registerForReadyCheck, READY_TIMEOUT_MS } from '../../services/readyCheck';
 import { BotCommand } from '../types';
+import { COLORS, avatarUrl, mention, base } from '../embeds';
 
-function createReadyEmbed(opponent: OpponentInfo): EmbedBuilder {
-  return new EmbedBuilder()
+// ─── Embed Factories ────────────────────────────────────────────────────────
+
+function createReadyEmbed(opponent: OpponentInfo, playerMain: string): EmbedBuilder {
+  return base(COLORS.brand)
     .setTitle('⚡ Match Found!')
-    .setDescription(
-      `You've been matched against **${opponent.username}** who mains **${opponent.main}**.\n\n` +
-        `Click **Ready!** within **${READY_TIMEOUT_MS / 1000} seconds** to confirm the match.`,
-    )
-    .setColor(0xd96cff);
+    .setDescription('A match has been found! Click **Ready!** before the timer expires to confirm.')
+    .setThumbnail(avatarUrl(opponent.id, opponent.avatar))
+    .addFields(
+      { name: '👤 Opponent', value: `${mention(opponent.id)} (${opponent.username})`, inline: true },
+      { name: '🎮 Their Main', value: opponent.main, inline: true },
+      { name: '\u200b', value: '\u200b', inline: true },
+      { name: '🛡️ Your Main', value: playerMain, inline: true },
+      { name: '⏱️ Time Limit', value: `${READY_TIMEOUT_MS / 1000} seconds`, inline: true },
+    );
 }
 
 export function createWaitingEmbed(opponent: OpponentInfo): EmbedBuilder {
-  return new EmbedBuilder()
-    .setTitle('⏳ Waiting for opponent...')
-    .setDescription(`You are ready! Waiting for **${opponent.username}** to confirm.`)
-    .setColor(0xff9800);
+  const opponentRef = opponent.id ? mention(opponent.id) : `**${opponent.username}**`;
+  return base(COLORS.warning)
+    .setTitle('⏳ Waiting for Opponent...')
+    .setDescription(`You're ready! Waiting for ${opponentRef} to confirm.`)
+    .setThumbnail(avatarUrl(opponent.id, opponent.avatar));
 }
 
-function createConfirmedEmbed(opponent: OpponentInfo): EmbedBuilder {
-  return new EmbedBuilder()
+function createConfirmedEmbed(opponent: OpponentInfo, playerMain: string): EmbedBuilder {
+  return base(COLORS.success)
     .setTitle('✅ Match Confirmed!')
-    .setDescription(
-      `Both players are ready! Your opponent is **${opponent.username}** who mains **${opponent.main}**.\n\nGood luck!`,
-    )
-    .setColor(0x4caf50);
+    .setDescription(`Both players are ready! 🎮`)
+    .setThumbnail(avatarUrl(opponent.id, opponent.avatar))
+    .addFields(
+      { name: '👤 Opponent', value: `${mention(opponent.id)} (${opponent.username})`, inline: true },
+      { name: '🎮 Their Main', value: opponent.main, inline: true },
+      { name: '\u200b', value: '\u200b', inline: true },
+      { name: '🛡️ Your Main', value: playerMain, inline: true },
+    );
 }
 
 function createDeclinedEmbed(): EmbedBuilder {
-  return new EmbedBuilder()
+  return base(COLORS.danger)
     .setTitle('❌ Match Cancelled')
-    .setDescription('You did not ready up in time and have been removed from the queue.')
-    .setColor(0xf44336);
+    .setDescription("You didn't ready up in time and have been removed from the queue.")
+    .addFields({ name: '🔄 Find Another Match', value: 'Use `/search` to jump back in.' });
 }
 
 function createRequeueEmbed(): EmbedBuilder {
-  return new EmbedBuilder()
-    .setTitle('🔄 Re-queuing...')
-    .setDescription("Your opponent didn't ready up in time. You've been placed back in the queue.")
-    .setColor(0xff9800);
+  return base(COLORS.warning)
+    .setTitle('🔄 Searching Again...')
+    .setDescription("Your opponent didn't ready up in time. You've been placed back in the queue.\nYou'll receive a new DM when a match is found.");
 }
+
+function createSearchingEmbed(main: string, lookingFor: string[]): EmbedBuilder {
+  const target = lookingFor.length > 0 ? lookingFor.join(', ') : 'Anyone';
+  return base(COLORS.brand)
+    .setTitle('🔍 Searching for a Match')
+    .setDescription("You're in the queue! You'll receive a DM when a match is found.")
+    .addFields(
+      { name: '🛡️ Your Main', value: main, inline: true },
+      { name: '🎯 Looking For', value: target, inline: true },
+    )
+    .setFooter({ text: 'SmashUps • Use /stopsearch to cancel' });
+}
+
+// ─── View Profile Button ─────────────────────────────────────────────────────
+
+function viewProfileRow(opponent: OpponentInfo): ActionRowBuilder<ButtonBuilder> {
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setLabel(`${opponent.username}'s Discord Profile`)
+      .setStyle(ButtonStyle.Link)
+      .setURL(`https://discord.com/users/${opponent.id}`)
+      .setEmoji('👤'),
+  );
+}
+
+// ─── Ready Check Row ─────────────────────────────────────────────────────────
 
 function buildReadyRow(matchId: string): ActionRowBuilder<ButtonBuilder> {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -64,6 +102,8 @@ function buildReadyRow(matchId: string): ActionRowBuilder<ButtonBuilder> {
       .setEmoji('✅'),
   );
 }
+
+// ─── Discord Match Callback ───────────────────────────────────────────────────
 
 /** Creates the onMatch callback for a Discord bot user. */
 export function createDiscordMatchCallback(discordUser: DiscordUser, main: string, lookingFor: string[]) {
@@ -77,9 +117,21 @@ export function createDiscordMatchCallback(discordUser: DiscordUser, main: strin
       { main, lookingFor },
       {
         onConfirmed: async () => {
+          MatchHistory.create({
+            playerDiscordId: discordUser.id,
+            opponentDiscordId: opponent.id,
+            opponentUsername: opponent.username,
+            opponentAvatar: opponent.avatar ?? null,
+            opponentMain: opponent.main,
+            playerMain: main,
+            matchedAt: Date.now(),
+          }).catch((err) => console.error('Failed to save match history:', err));
           try {
             if (messageRef.msg) {
-              await messageRef.msg.edit({ embeds: [createConfirmedEmbed(opponent)], components: [] });
+              await messageRef.msg.edit({
+                embeds: [createConfirmedEmbed(opponent, main)],
+                components: [viewProfileRow(opponent)],
+              });
             }
           } catch { /* DMs closed */ }
         },
@@ -108,8 +160,7 @@ export function createDiscordMatchCallback(discordUser: DiscordUser, main: strin
         },
       },
       () => {
-        // reenterPool — handled inside onRequeue above, but also called by cancelReadyCheckForUser
-        // on disconnect. In that case we can't do much since the bot command is long finished.
+        // reenterPool — handled inside onRequeue above, also called by cancelReadyCheckForUser.
       },
     );
 
@@ -117,7 +168,7 @@ export function createDiscordMatchCallback(discordUser: DiscordUser, main: strin
     try {
       const dm = await discordUser.createDM();
       messageRef.msg = await dm.send({
-        embeds: [createReadyEmbed(opponent)],
+        embeds: [createReadyEmbed(opponent, main)],
         components: [buildReadyRow(matchId)],
       });
     } catch {
@@ -125,6 +176,8 @@ export function createDiscordMatchCallback(discordUser: DiscordUser, main: strin
     }
   };
 }
+
+// ─── /search Command ─────────────────────────────────────────────────────────
 
 export const searchCommand: BotCommand = {
   data: new SlashCommandBuilder()
@@ -143,15 +196,26 @@ export const searchCommand: BotCommand = {
 
     const user = await User.findOne({ where: { discordId: interaction.user.id } });
     if (!user) {
-      await interaction.editReply('You are not registered. Use `/register` first.');
+      const embed = base(COLORS.danger)
+        .setTitle('❌ Not Registered')
+        .setDescription('You need to register first. Use `/register` to get started.');
+      await interaction.editReply({ embeds: [embed] });
       return;
     }
     if (!user.main) {
-      await interaction.editReply('You need to set a main first. Use `/setmain`.');
+      const embed = base(COLORS.warning)
+        .setTitle('⚠️ No Main Set')
+        .setDescription('You need to set a main character before searching.')
+        .addFields({ name: 'How to fix', value: 'Use `/setmain` to choose your main.' });
+      await interaction.editReply({ embeds: [embed] });
       return;
     }
     if (isInPool(interaction.user.id)) {
-      await interaction.editReply('You are already searching. Use `/stopsearch` to cancel first.');
+      const embed = base(COLORS.warning)
+        .setTitle('Already Searching')
+        .setDescription("You're already in the matchmaking queue.")
+        .addFields({ name: 'Want to stop?', value: 'Use `/stopsearch` to cancel your current search.' });
+      await interaction.editReply({ embeds: [embed] });
       return;
     }
 
@@ -160,9 +224,10 @@ export const searchCommand: BotCommand = {
 
     if (lookingForRaw && lookingForRaw.toLowerCase() !== 'anyone') {
       if (!CHARACTER_NAMES.includes(lookingForRaw)) {
-        await interaction.editReply(
-          'Invalid character. Please select one from the autocomplete list, or leave blank for anyone.',
-        );
+        const embed = base(COLORS.danger)
+          .setTitle('❌ Invalid Character')
+          .setDescription('Please select a character from the autocomplete list, or leave blank to match against anyone.');
+        await interaction.editReply({ embeds: [embed] });
         return;
       }
       lookingFor = [lookingForRaw];
@@ -180,12 +245,12 @@ export const searchCommand: BotCommand = {
     );
 
     if (matched) {
-      await interaction.editReply('Match found! Check your DMs for the ready-check.');
+      const embed = base(COLORS.success)
+        .setTitle('⚡ Match Found!')
+        .setDescription('A match was found instantly! Check your DMs for the ready-check.');
+      await interaction.editReply({ embeds: [embed] });
     } else {
-      const target = lookingFor.length > 0 ? `**${lookingFor[0]}** players` : 'any opponent';
-      await interaction.editReply(
-        `Searching for ${target} as **${user.main}**. You will receive a DM when a match is found.\nUse \`/stopsearch\` to cancel.`,
-      );
+      await interaction.editReply({ embeds: [createSearchingEmbed(user.main, lookingFor)] });
     }
   },
 

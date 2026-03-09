@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { User } from '../../models/user';
 import { BotCommand } from '../types';
+import { COLORS, avatarUrl, base } from '../embeds';
 
 export const registerCommand: BotCommand = {
   data: new SlashCommandBuilder()
@@ -14,7 +15,14 @@ export const registerCommand: BotCommand = {
 
     const existing = await User.findOne({ where: { discordId: id } });
     if (existing) {
-      await interaction.editReply('You are already registered!');
+      const embed = base(COLORS.info)
+        .setTitle('Already Registered')
+        .setDescription("You already have a SmashUps account. You're all set!")
+        .setThumbnail(avatarUrl(id, avatar))
+        .addFields(
+          { name: 'Main', value: existing.main ?? 'Not set — use `/setmain`', inline: true },
+        );
+      await interaction.editReply({ embeds: [embed] });
       return;
     }
 
@@ -25,6 +33,17 @@ export const registerCommand: BotCommand = {
       avatar: avatar ?? undefined,
     });
 
-    await interaction.editReply('Successfully registered! Use `/setmain` to set your main character.');
+    const embed = base(COLORS.success)
+      .setTitle('🎮 Welcome to SmashUps!')
+      .setDescription("You're registered and ready to find matchup partners.")
+      .setThumbnail(avatarUrl(id, avatar))
+      .addFields(
+        {
+          name: '📋 Next Steps',
+          value: '> Set your main with `/setmain`\n> View your profile with `/profile`\n> Start searching with `/search`',
+        },
+      );
+
+    await interaction.editReply({ embeds: [embed] });
   },
 };
