@@ -1,0 +1,44 @@
+name: Deploy Backend → Fly.io
+
+on:
+  push:
+    branches: [production]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io
+        run: flyctl deploy --remote-only
+        working-directory: backend
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+# ── Setup (one-time, run locally) ─────────────────────────────────────────────
+#
+#  1. Install flyctl: https://fly.io/docs/hands-on/install-flyctl/
+#  2. fly auth login
+#  3. fly apps create smashups          (reserve your app name)
+#  4. fly volumes create smashups_data --size 1 --region ord
+#                                        (persistent SQLite volume)
+#  5. Set secrets — these are injected at runtime and never stored in fly.toml:
+#     fly secrets set \
+#       DISCORD_CLIENT_ID="..."     \
+#       DISCORD_CLIENT_SECRET="..." \
+#       JWT_SECRET="..."            \
+#       DISCORD_BOT_TOKEN="..."     \
+#       FRONTEND_URL="https://your-app.vercel.app" \
+#       REDIRECT_URI="https://smashups.fly.dev/auth/discord/callback"
+#  6. Add this GitHub repository secret (Settings → Secrets → Actions):
+#     FLY_API_TOKEN — from: fly tokens create deploy
