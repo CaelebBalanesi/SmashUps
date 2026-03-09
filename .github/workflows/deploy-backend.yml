@@ -33,12 +33,12 @@ jobs:
 #  4. fly volumes create smashups_data --size 1 --region ord
 #                                        (persistent SQLite volume)
 #  5. Set secrets — these are injected at runtime and never stored in fly.toml:
-#     fly secrets set \
-#       DISCORD_CLIENT_ID="..."     \
-#       DISCORD_CLIENT_SECRET="..." \
-#       JWT_SECRET="..."            \
-#       DISCORD_BOT_TOKEN="..."     \
-#       FRONTEND_URL="https://your-app.vercel.app" \
-#       REDIRECT_URI="https://smashups.fly.dev/auth/discord/callback"
+    # fly secrets set \
+    #   DISCORD_CLIENT_ID="..."     \
+    #   DISCORD_CLIENT_SECRET="..." \
+    #   JWT_SECRET="..."            \
+    #   DISCORD_BOT_TOKEN="..."     \
+    #   FRONTEND_URL="https://your-app.vercel.app" \
+    #   REDIRECT_URI="https://smashups.fly.dev/auth/discord/callback"
 #  6. Add this GitHub repository secret (Settings → Secrets → Actions):
 #     FLY_API_TOKEN — from: fly tokens create deploy
