@@ -88,3 +88,83 @@
     <p-message severity="info" [style]="{ width: '100%' }">{{ searchMessage }}</p-message>
   }
 </div>
+
+<!-- Ready Check Dialog -->
+<p-dialog
+  [visible]="!!pendingMatch"
+  [modal]="true"
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="ready-check-dialog"
+  [style]="{ width: '420px' }"
+>
+  @if (pendingMatch) {
+    <ng-template #header>
+      <div class="ready-dialog-header">
+        <i class="pi pi-bolt ready-icon"></i>
+        <span>Match Found!</span>
+      </div>
+    </ng-template>
+
+    <div class="ready-dialog-body">
+      <div class="ready-opponent-row">
+        <p-avatar
+          [image]="getAvatarUrl(pendingMatch.opponent)"
+          shape="circle"
+          size="large"
+          class="ready-opponent-avatar"
+        />
+        <div class="ready-opponent-details">
+          <span class="ready-opponent-name">{{ pendingMatch.opponent.username }}</span>
+          <div class="ready-opponent-main">
+            @if (getMainIcon(pendingMatch.opponent.main)) {
+              <img
+                [src]="getMainIcon(pendingMatch.opponent.main)"
+                [alt]="pendingMatch.opponent.main"
+                width="18"
+                height="18"
+              />
+            }
+            <span>{{ pendingMatch.opponent.main }}</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="ready-prompt">Are you ready to play?</p>
+
+      <div class="ready-countdown">
+        <span class="countdown-label">{{ countdown }}s</span>
+        <p-progressbar
+          [value]="countdownProgress"
+          [showValue]="false"
+          class="countdown-bar"
+          [style]="{ height: '6px' }"
+        />
+      </div>
+    </div>
+
+    <ng-template #footer>
+      <div class="ready-dialog-footer">
+        @if (!readyClicked) {
+          <p-button
+            label="Ready!"
+            icon="pi pi-check"
+            severity="success"
+            (onClick)="readyUp()"
+            styleClass="ready-btn"
+          />
+        } @else {
+          <div class="waiting-state">
+            <p-progressspinner
+              strokeWidth="4"
+              animationDuration=".8s"
+              [style]="{ width: '24px', height: '24px' }"
+            />
+            <span>Waiting for opponent...</span>
+          </div>
+        }
+      </div>
+    </ng-template>
+  }
+</p-dialog>

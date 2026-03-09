@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+
 export interface OpponentInfo {
   id: string;
   username: string;
@@ -11,7 +13,7 @@ interface PoolEntry {
   avatar?: string;
   main: string;
   lookingFor: string[]; // empty = any character
-  onMatch: (opponent: OpponentInfo) => void;
+  onMatch: (matchId: string, opponent: OpponentInfo) => void;
 }
 
 const pool: PoolEntry[] = [];
@@ -33,7 +35,7 @@ export function enterPool(
   avatar: string | undefined,
   main: string,
   lookingFor: string[],
-  onMatch: (opponent: OpponentInfo) => void,
+  onMatch: (matchId: string, opponent: OpponentInfo) => void,
 ): boolean {
   leavePool(userId);
 
@@ -42,8 +44,9 @@ export function enterPool(
 
   if (match) {
     pool.splice(pool.indexOf(match), 1);
-    entry.onMatch({ id: match.userId, username: match.username, avatar: match.avatar, main: match.main });
-    match.onMatch({ id: entry.userId, username: entry.username, avatar: entry.avatar, main: entry.main });
+    const matchId = randomUUID();
+    entry.onMatch(matchId, { id: match.userId, username: match.username, avatar: match.avatar, main: match.main });
+    match.onMatch(matchId, { id: entry.userId, username: entry.username, avatar: entry.avatar, main: entry.main });
     return true;
   }
 

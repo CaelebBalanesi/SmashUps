@@ -129,3 +129,107 @@
   font-size: 0.85rem;
   margin-left: auto;
 }
+
+// ===== Ready Check Dialog =====
+
+.ready-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+
+  .ready-icon {
+    font-size: 1.3rem;
+    color: #ffd740;
+  }
+}
+
+.ready-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.ready-opponent-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ready-opponent-avatar {
+  flex-shrink: 0;
+  border: 2px solid rgba(217, 108, 255, 0.4);
+  border-radius: 50%;
+}
+
+.ready-opponent-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.ready-opponent-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e0e0e0;
+}
+
+.ready-opponent-main {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #ce93d8;
+  font-size: 0.85rem;
+  font-weight: 500;
+
+  img {
+    border-radius: 3px;
+    object-fit: cover;
+  }
+}
+
+.ready-prompt {
+  text-align: center;
+  font-size: 0.95rem;
+  color: #bbb;
+  margin: 0;
+}
+
+.ready-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.countdown-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #888;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-bar {
+  width: 100%;
+}
+
+.ready-dialog-footer {
+  display: flex;
+  justify-content: center;
+}
+
+.ready-btn {
+  width: 100%;
+}
+
+.waiting-state {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #aaa;
+  font-size: 0.9rem;
+}

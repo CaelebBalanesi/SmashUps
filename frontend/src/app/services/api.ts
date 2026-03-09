@@ -19,6 +19,12 @@ export interface MatchOpponent {
   main: string;
 }
 
+export interface PendingMatch {
+  matchId: string;
+  opponent: MatchOpponent;
+  timeoutMs: number;
+}
+
 @Injectable({
   providedIn: "root",
 })
@@ -30,10 +36,12 @@ export class Api implements OnDestroy {
   // --- WebSocket ---
   private socket: Socket | null = null;
   private matchSubject = new BehaviorSubject<MatchOpponent | null>(null);
+  private pendingMatchSubject = new BehaviorSubject<PendingMatch | null>(null);
   private searchingSubject = new BehaviorSubject<boolean>(false);
   private searchMessageSubject = new BehaviorSubject<string>("");
 
   match$ = this.matchSubject.asObservable();
+  pendingMatch$ = this.pendingMatchSubject.asObservable();
   searching$ = this.searchingSubject.asObservable();
   searchMessage$ = this.searchMessageSubject.asObservable();
 
@@ -135,9 +143,9 @@ export class Api implements OnDestroy {
 
     this.socket.on("authenticated", (data) => {
       if (data.success) {
-        console.log("✅ Socket authenticated:", data.user);
+        console.log("Socket authenticated:", data.user);
       } else {
-        console.warn("❌ Socket authentication failed");
+        console.warn("Socket authentication failed");
       }
     });
 
@@ -146,11 +154,31 @@ export class Api implements OnDestroy {
       this.searchMessageSubject.next(data.message);
     });
 
-    this.socket.on("matchFound", (data) => {
+    this.socket.on("matchPending", (data: PendingMatch) => {
       this.searchingSubject.next(false);
       this.searchMessageSubject.next("");
+      this.pendingMatchSubject.next(data);
+      console.log("Match pending — ready check started:", data.opponent);
+    });
+
+    this.socket.on("matchConfirmed", (data: { opponent: MatchOpponent }) => {
+      this.pendingMatchSubject.next(null);
       this.matchSubject.next(data.opponent);
-      console.log("🎯 Match found:", data.opponent);
+      console.log("Match confirmed:", data.opponent);
+    });
+
+    this.socket.on("matchDeclined", (data: { message: string }) => {
+      this.pendingMatchSubject.next(null);
+      this.searchingSubject.next(false);
+      this.searchMessageSubject.next(data.message);
+      console.log("Match declined:", data.message);
+    });
+
+    this.socket.on("requeueing", (data: { message: string }) => {
+      this.pendingMatchSubject.next(null);
+      this.searchMessageSubject.next(data.message);
+      // searching$ is set back to true by the subsequent 'searching' event from the server
+      console.log("Re-queued:", data.message);
     });
 
     this.socket.on("searchStopped", () => {
@@ -159,12 +187,13 @@ export class Api implements OnDestroy {
     });
 
     this.socket.on("disconnect", () => {
-      console.log("❎ Disconnected from match server");
+      console.log("Disconnected from match server");
       this.searchingSubject.next(false);
+      this.pendingMatchSubject.next(null);
     });
 
     this.socket.on("error", (msg) => {
-      console.error("⚠️ Match socket error:", msg);
+      console.error("Match socket error:", msg);
     });
   }
 
@@ -175,5 +204,9 @@ export class Api implements OnDestroy {
 
   stopSearch() {
     this.socket?.emit("stopSearch");
+  }
+
+  readyUp(matchId: string) {
+    this.socket?.emit("readyUp", { matchId });
   }
 }

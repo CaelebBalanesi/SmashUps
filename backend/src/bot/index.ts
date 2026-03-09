@@ -5,14 +5,16 @@ import {
   Routes,
   Interaction,
   ChatInputCommandInteraction,
+  ButtonInteraction,
 } from 'discord.js';
 import config from '../config/config';
 import { BotCommand } from './types';
 import { registerCommand } from './commands/register';
 import { setMainCommand } from './commands/setmain';
-import { searchCommand } from './commands/search';
+import { searchCommand, createWaitingEmbed } from './commands/search';
 import { stopSearchCommand } from './commands/stopsearch';
 import { profileCommand } from './commands/profile';
+import { markReady, getOpponentInfo } from '../services/readyCheck';
 
 const commands: BotCommand[] = [
   registerCommand,
@@ -25,6 +27,33 @@ const commands: BotCommand[] = [
 const commandMap = new Map<string, BotCommand>(
   commands.map((c) => [c.data.name, c]),
 );
+
+const READY_BUTTON_PREFIX = 'ready_';
+
+async function handleReadyButtonInteraction(interaction: ButtonInteraction): Promise<void> {
+  const matchId = interaction.customId.slice(READY_BUTTON_PREFIX.length);
+
+  // Fetch opponent info before markReady deletes the check on full confirmation
+  const opponent = getOpponentInfo(matchId, interaction.user.id);
+  const result = markReady(matchId, interaction.user.id);
+
+  if (result === 'waiting') {
+    await interaction.update({
+      embeds: [createWaitingEmbed(opponent ?? { id: '', username: 'your opponent', avatar: undefined, main: '' })],
+      components: [],
+    });
+  } else if (result === 'confirmed') {
+    // onConfirmed callbacks already fired (async) and will edit the messages.
+    // Just acknowledge so Discord doesn't show a "failed" state on the button.
+    await interaction.deferUpdate();
+  } else {
+    // 'not_found' — match expired before the click was processed
+    await interaction.reply({
+      content: 'This ready check has already expired.',
+      ephemeral: true,
+    });
+  }
+}
 
 export const initBot = async (): Promise<void> => {
   const token = config.discordBotToken;
@@ -60,6 +89,14 @@ export const initBot = async (): Promise<void> => {
           await interaction.editReply(reply);
         } else {
           await interaction.reply(reply);
+        }
+      }
+    } else if (interaction.isButton()) {
+      if (interaction.customId.startsWith(READY_BUTTON_PREFIX)) {
+        try {
+          await handleReadyButtonInteraction(interaction as ButtonInteraction);
+        } catch (err) {
+          console.error('Error handling ready button:', err);
         }
       }
     } else if (interaction.isAutocomplete()) {

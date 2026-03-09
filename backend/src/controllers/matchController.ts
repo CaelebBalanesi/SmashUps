@@ -2,7 +2,13 @@ import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import config from '../config/config';
 import { Server as HttpServer } from 'http';
-import { enterPool, leavePool } from '../services/matchmaking';
+import { enterPool, leavePool, OpponentInfo } from '../services/matchmaking';
+import {
+  registerForReadyCheck,
+  markReady,
+  cancelReadyCheckForUser,
+  READY_TIMEOUT_MS,
+} from '../services/readyCheck';
 
 interface UserSession {
   userId: string;
@@ -22,6 +28,55 @@ export const initMatchSocket = (server: HttpServer) => {
     },
   });
 
+  /**
+   * Build the onMatch callback for a socket user.
+   * Registers with the shared readyCheck service and emits matchPending to the socket.
+   */
+  function createSocketMatchCallback(socketId: string, searchParams: { main: string; lookingFor: string[] }) {
+    return (matchId: string, opponent: OpponentInfo) => {
+      const session = userMap.get(socketId);
+      if (!session) return;
+
+      registerForReadyCheck(
+        matchId,
+        session.userId,
+        opponent,
+        searchParams,
+        {
+          onConfirmed: () => {
+            io.to(socketId).emit('matchConfirmed', { opponent });
+          },
+          onDeclined: () => {
+            io.to(socketId).emit('matchDeclined', {
+              message: 'You did not ready up in time and have been removed from the queue.',
+            });
+          },
+          onRequeue: () => {
+            io.to(socketId).emit('requeueing', {
+              message: 'Your opponent failed to ready up. Re-entering the queue...',
+            });
+          },
+        },
+        () => {
+          // Re-enter pool — re-fetch session in case it changed
+          const s = userMap.get(socketId);
+          if (!s) return;
+          enterPool(
+            s.userId,
+            s.username,
+            s.avatar,
+            searchParams.main,
+            searchParams.lookingFor,
+            createSocketMatchCallback(socketId, searchParams),
+          );
+          io.to(socketId).emit('searching', { message: 'Re-queued — searching for a new opponent...' });
+        },
+      );
+
+      io.to(socketId).emit('matchPending', { matchId, opponent, timeoutMs: READY_TIMEOUT_MS });
+    };
+  }
+
   io.on('connection', (socket) => {
     console.log('Socket connected:', socket.id);
 
@@ -37,7 +92,6 @@ export const initMatchSocket = (server: HttpServer) => {
 
         const session: UserSession = { userId: id, username, avatar, main, socketId: socket.id };
         userMap.set(socket.id, session);
-        socket.data.userId = id;
 
         console.log(`Authenticated: ${username} (${id})`);
         socket.emit('authenticated', { success: true, user: session });
@@ -55,6 +109,7 @@ export const initMatchSocket = (server: HttpServer) => {
       if (!main || !Array.isArray(lookingFor)) return socket.emit('error', 'Invalid search data.');
 
       session.main = main;
+      const searchParams = { main, lookingFor };
 
       const matched = enterPool(
         session.userId,
@@ -62,7 +117,7 @@ export const initMatchSocket = (server: HttpServer) => {
         session.avatar,
         main,
         lookingFor,
-        (opponent) => socket.emit('matchFound', { opponent }),
+        createSocketMatchCallback(socket.id, searchParams),
       );
 
       if (!matched) {
@@ -70,10 +125,22 @@ export const initMatchSocket = (server: HttpServer) => {
       }
     });
 
+    socket.on('readyUp', (data: { matchId: string }) => {
+      const session = userMap.get(socket.id);
+      if (!session) return;
+
+      const { matchId } = data;
+      if (!matchId || typeof matchId !== 'string') return;
+
+      markReady(matchId, session.userId);
+      // onConfirmed / callbacks in readyCheck service handle all socket emissions
+    });
+
     socket.on('stopSearch', () => {
       const session = userMap.get(socket.id);
       if (!session) return;
       leavePool(session.userId);
+      cancelReadyCheckForUser(session.userId);
       socket.emit('searchStopped');
     });
 
@@ -81,6 +148,7 @@ export const initMatchSocket = (server: HttpServer) => {
       const session = userMap.get(socket.id);
       if (session) {
         leavePool(session.userId);
+        cancelReadyCheckForUser(session.userId);
         userMap.delete(socket.id);
       }
       console.log('Disconnected:', socket.id);
