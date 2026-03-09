@@ -1,5 +1,5 @@
 export interface OpponentInfo {
-  userId: string;
+  id: string;
   username: string;
   avatar?: string;
   main: string;
@@ -42,8 +42,8 @@ export function enterPool(
 
   if (match) {
     pool.splice(pool.indexOf(match), 1);
-    entry.onMatch({ userId: match.userId, username: match.username, avatar: match.avatar, main: match.main });
-    match.onMatch({ userId: entry.userId, username: entry.username, avatar: entry.avatar, main: entry.main });
+    entry.onMatch({ id: match.userId, username: match.username, avatar: match.avatar, main: match.main });
+    match.onMatch({ id: entry.userId, username: entry.username, avatar: entry.avatar, main: entry.main });
     return true;
   }
 
