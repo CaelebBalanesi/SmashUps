@@ -1,7 +1,13 @@
-<div class="landing-container">
-  <div class="content">
-    <img src="./logo.png" alt="Smashups Logo" />
-    <h1>SmashUps</h1>
-    <button (click)="goToMatchupSearch()">Search Matchups</button>
+<div class="home-hero">
+  <div class="hero-content">
+    <img src="./logo.png" alt="SmashUps Logo" class="hero-logo" />
+    <h1 class="hero-title">SmashUps</h1>
+    <p class="hero-subtitle">Find your perfect matchup practice partner</p>
+    <p-button
+      label="Search Matchups"
+      icon="pi pi-search"
+      size="large"
+      (onClick)="goToMatchupSearch()"
+    />
   </div>
 </div>

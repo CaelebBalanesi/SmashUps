@@ -1,41 +1,62 @@
 @if (user) {
-<div class="profile">
-  <h1>{{ user.username }}</h1>
-  <p>Select your main Smash character:</p>
+  <div class="profile-container">
+    <p-card>
+      <ng-template #header>
+        <div class="profile-header">
+          <p-avatar [image]="avatarUrl" shape="circle" size="xlarge" class="profile-avatar" />
+          <div class="profile-info">
+            <h1>{{ user.username }}</h1>
+            @if (user.main) {
+              <span class="current-main">Current main: {{ user.main }}</span>
+            }
+          </div>
+        </div>
+      </ng-template>
 
-  <div class="main-selection-wrapper">
-    <app-character-select
-      [characters]="characters"
-      (selected)="selectMain($event)"
-    ></app-character-select>
+      <ng-template #content>
+        <p class="section-label">Select your main character</p>
+        <div class="main-selection">
+          <app-character-select
+            [characters]="characters"
+            (selected)="selectMain($event)"
+          />
+          @if (selectedMain) {
+            <div class="selected-preview">
+              <img [src]="selectedMain.icon" [alt]="selectedMain.name" class="char-icon" />
+              <span class="char-name">{{ selectedMain.name }}</span>
+            </div>
+          }
+        </div>
+      </ng-template>
 
-    @if (selectedMain) {
-    <div class="character-preview">
-      <img
-        class="character-icon"
-        [src]="selectedMain.icon"
-        [alt]="selectedMain.name"
-      />
-      <span class="char-name">{{ selectedMain.name }}</span>
-    </div>
-    }
+      <ng-template #footer>
+        <p-button
+          [label]="saving ? 'Saving...' : 'Save Main'"
+          icon="pi pi-save"
+          [disabled]="!selectedMain || saving"
+          [loading]="saving"
+          (onClick)="saveMain()"
+          [style]="{ width: '100%' }"
+        />
+      </ng-template>
+    </p-card>
   </div>
-
-  <button
-    class="save-btn"
-    [disabled]="!selectedMain || saving"
-    (click)="saveMain()"
-  >
-    {{ saving ? "Saving..." : "Save" }}
-  </button>
-
-  @if (message) {
-  <p class="message">{{ message }}</p>
-  }
-</div>
 } @else {
-<div class="login-prompt">
-  <p>You must log in with Discord to set your main.</p>
-  <button (click)="loginWithDiscord()">Login with Discord</button>
-</div>
+  <div class="login-container">
+    <p-card>
+      <ng-template #content>
+        <div class="login-content">
+          <i class="pi pi-discord login-icon"></i>
+          <h2>Sign In Required</h2>
+          <p>Log in with Discord to set your main character</p>
+          <p-button
+            label="Login with Discord"
+            icon="pi pi-discord"
+            size="large"
+            (onClick)="loginWithDiscord()"
+          />
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
 }

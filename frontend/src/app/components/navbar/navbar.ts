@@ -1,14 +1,17 @@
 import { Component, OnInit } from "@angular/core";
 import { Api, User } from "../../services/api";
-import { RouterLink } from "@angular/router";
+import { RouterLink, RouterLinkActive } from "@angular/router";
+import { Toolbar } from "primeng/toolbar";
+import { Button } from "primeng/button";
+import { Avatar } from "primeng/avatar";
 
 @Component({
   selector: "app-navbar",
-  imports: [RouterLink],
+  imports: [RouterLink, RouterLinkActive, Toolbar, Button, Avatar],
   templateUrl: "./navbar.html",
   styleUrl: "./navbar.scss",
 })
-export class Navbar {
+export class Navbar implements OnInit {
   user: User | null = null;
 
   constructor(private api: Api) {}

@@ -1,22 +1,19 @@
-<div class="select-wrapper">
-  <input
-    type="text"
-    placeholder="Search characters..."
-    [(ngModel)]="searchTerm"
-    (focus)="dropdownOpen = true"
-    (blur)="closeDropdown()"
-    class="char-search"
-  />
-  @if (dropdownOpen) {
-  <div class="dropdown" (mousedown)="$event.preventDefault()">
-    @for(char of filteredCharacters(); track $index) {
-    <div class="dropdown-item" (click)="selectCharacter(char)">
-      <img [src]="char.icon" [alt]="char.name" />
+<p-select
+  [(ngModel)]="selectedChar"
+  [options]="characters"
+  optionLabel="name"
+  [filter]="true"
+  filterBy="name"
+  placeholder="Search characters..."
+  appendTo="body"
+  [resetFilterOnHide]="true"
+  (onChange)="onSelect($event)"
+  [style]="{ width: '100%' }"
+>
+  <ng-template #item let-char>
+    <div class="char-option">
+      <img [src]="char.icon" [alt]="char.name" width="28" height="28" />
       <span>{{ char.name }}</span>
     </div>
-    } @if (filteredCharacters().length === 0) {
-    <div class="no-results">No characters found</div>
-    }
-  </div>
-  }
-</div>
+  </ng-template>
+</p-select>

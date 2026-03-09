@@ -1,11 +1,18 @@
 import { Component } from "@angular/core";
-import { Character, characters } from "../../models/characters";
+import { Character, characters, getCharacterByName } from "../../models/characters";
 import { CharacterSelectComponent } from "../../components/character-select/character-select";
 import { Api, MatchOpponent } from "../../services/api";
+import { MessageService } from "primeng/api";
+import { Card } from "primeng/card";
+import { Button } from "primeng/button";
+import { Chip } from "primeng/chip";
+import { ProgressSpinner } from "primeng/progressspinner";
+import { Message } from "primeng/message";
+import { Avatar } from "primeng/avatar";
 
 @Component({
   selector: "app-search-page",
-  imports: [CharacterSelectComponent],
+  imports: [CharacterSelectComponent, Card, Button, Chip, ProgressSpinner, Message, Avatar],
   templateUrl: "./search-page.html",
   styleUrl: "./search-page.scss",
 })
@@ -16,15 +23,14 @@ export class SearchPage {
   searching = false;
   searchMessage = "";
   userMain: string | null = null;
-  messageType = "message";
 
-  constructor(private api: Api) {
+  constructor(
+    private api: Api,
+    private messageService: MessageService,
+  ) {
     this.api.match$.subscribe((match) => (this.match = match));
-    this.api.searching$.subscribe(
-      (isSearching) => (this.searching = isSearching),
-    );
+    this.api.searching$.subscribe((isSearching) => (this.searching = isSearching));
     this.api.searchMessage$.subscribe((msg) => (this.searchMessage = msg));
-
     this.api.user$.subscribe((user) => {
       this.userMain = user?.main ?? null;
     });
@@ -38,13 +44,12 @@ export class SearchPage {
 
   removeCharacter(index: number) {
     if (this.searching) {
-      const temp_message = this.searchMessage;
-      this.searchMessage = "You cannot remove characters while searching!";
-      this.messageType = "error-message";
-      setTimeout(() => {
-        this.searchMessage = temp_message;
-        this.messageType = "message";
-      }, 3000);
+      this.messageService.add({
+        severity: "warn",
+        summary: "Searching",
+        detail: "Cannot remove characters while searching.",
+        life: 3000,
+      });
       return;
     }
     this.selectedCharacters.splice(index, 1);
@@ -52,10 +57,14 @@ export class SearchPage {
 
   startSearch() {
     if (!this.userMain) {
-      alert("Please set your main character in your profile first!");
+      this.messageService.add({
+        severity: "warn",
+        summary: "No Main Set",
+        detail: "Please set your main character in your profile first.",
+        life: 4000,
+      });
       return;
     }
-
     const lookingFor = this.selectedCharacters.map((c) => c.name);
     this.api.startSearch(this.userMain, lookingFor);
   }
@@ -68,6 +77,10 @@ export class SearchPage {
     return user.avatar
       ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
       : "https://cdn.discordapp.com/embed/avatars/0.png";
+  }
+
+  getMainIcon(name: string): string {
+    return getCharacterByName(name)?.icon ?? "";
   }
 
   openDiscordProfile(id: string) {

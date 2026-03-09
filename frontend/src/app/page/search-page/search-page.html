@@ -1,44 +1,90 @@
-<div class="page">
-  <h1>Select Characters to Play Against</h1>
+<div class="search-container">
+  <p-card>
+    <ng-template #header>
+      <div class="search-header">
+        <h1>Find a Matchup Partner</h1>
+        <p>Select the characters you want to practice against</p>
+      </div>
+    </ng-template>
 
-  <app-character-select
-    [characters]="characters"
-    (selected)="addCharacter($event)"
-  ></app-character-select>
+    <ng-template #content>
+      <app-character-select [characters]="characters" (selected)="addCharacter($event)" />
 
-  @if (selectedCharacters.length) {
-  <div class="selected-characters">
-    @for (char of selectedCharacters; track $index) {
-    <div class="char-icon" (click)="removeCharacter($index)">
-      <img [src]="char.icon" [alt]="char.name" />
-      <span>{{ char.name }}</span>
-    </div>
-    }
-  </div>
+      @if (selectedCharacters.length) {
+        <div class="selected-section">
+          <p class="selected-label">Playing against</p>
+          <div class="chips-row">
+            @for (char of selectedCharacters; track $index; let i = $index) {
+              <p-chip
+                [label]="char.name"
+                [image]="char.icon"
+                [removable]="true"
+                (onRemove)="removeCharacter(i)"
+              />
+            }
+          </div>
+        </div>
+      }
+    </ng-template>
 
-  <div class="actions">
-    <button (click)="startSearch()" [disabled]="searching">
-      {{ searching ? "Searching..." : "Start Search" }}
-    </button>
-    @if (searching) {
-    <button class="stop" (click)="stopSearch()">Stop</button>
-    }
-  </div>
-  } @if (match) {
-  <div class="match-result">
-    <h2>Match Found!</h2>
-    <div class="opponent">
-      <img
-        (click)="openDiscordProfile(match.id)"
-        [src]="getAvatarUrl(match)"
-        [alt]="match.username"
-      />
-      <p>{{ match.username }} — {{ match.main }}</p>
-    </div>
-  </div>
+    <ng-template #footer>
+      @if (selectedCharacters.length) {
+        <div class="search-actions">
+          @if (!searching) {
+            <p-button
+              label="Start Search"
+              icon="pi pi-search"
+              (onClick)="startSearch()"
+            />
+          } @else {
+            <div class="searching-state">
+              <p-progressspinner
+                strokeWidth="4"
+                animationDuration=".8s"
+                [style]="{ width: '32px', height: '32px' }"
+              />
+              <p-button
+                label="Stop"
+                icon="pi pi-stop-circle"
+                severity="danger"
+                [outlined]="true"
+                (onClick)="stopSearch()"
+              />
+            </div>
+          }
+        </div>
+      }
+    </ng-template>
+  </p-card>
+
+  @if (match) {
+    <p-card class="match-card">
+      <ng-template #header>
+        <div class="match-header">
+          <i class="pi pi-check-circle match-icon"></i>
+          <h2>Match Found!</h2>
+        </div>
+      </ng-template>
+
+      <ng-template #content>
+        <div class="opponent-row" (click)="openDiscordProfile(match.id)">
+          <p-avatar [image]="getAvatarUrl(match)" shape="circle" size="xlarge" class="opponent-avatar" />
+          <div class="opponent-details">
+            <span class="opponent-name">{{ match.username }}</span>
+            <div class="opponent-main">
+              @if (getMainIcon(match.main)) {
+                <img [src]="getMainIcon(match.main)" [alt]="match.main" width="20" height="20" />
+              }
+              <span>{{ match.main }}</span>
+            </div>
+          </div>
+          <i class="pi pi-arrow-up-right open-icon"></i>
+        </div>
+      </ng-template>
+    </p-card>
   }
 
   @if (searchMessage) {
-  <p [class]="messageType">{{ searchMessage }}</p>
+    <p-message severity="info" [style]="{ width: '100%' }">{{ searchMessage }}</p-message>
   }
 </div>

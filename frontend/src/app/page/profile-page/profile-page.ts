@@ -1,22 +1,28 @@
-import { Component } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 import { Api, User } from "../../services/api";
 import { Character, characters } from "../../models/characters";
 import { CharacterSelectComponent } from "../../components/character-select/character-select";
+import { MessageService } from "primeng/api";
+import { Card } from "primeng/card";
+import { Button } from "primeng/button";
+import { Avatar } from "primeng/avatar";
 
 @Component({
   selector: "app-profile-page",
-  imports: [CharacterSelectComponent],
+  imports: [CharacterSelectComponent, Card, Button, Avatar],
   templateUrl: "./profile-page.html",
   styleUrl: "./profile-page.scss",
 })
-export class ProfilePage {
+export class ProfilePage implements OnInit {
   selectedMain: Character | null = null;
   user: User | null = null;
   saving = false;
-  message = "";
   characters: Character[] = characters;
 
-  constructor(private api: Api) {}
+  constructor(
+    private api: Api,
+    private messageService: MessageService,
+  ) {}
 
   ngOnInit() {
     this.api.user$.subscribe((user) => {
@@ -27,6 +33,11 @@ export class ProfilePage {
     });
   }
 
+  get avatarUrl(): string {
+    if (!this.user) return "";
+    return `https://cdn.discordapp.com/avatars/${this.user.discordId}/${this.user.avatar}.png`;
+  }
+
   selectMain(character: Character) {
     this.selectedMain = character;
   }
@@ -34,16 +45,25 @@ export class ProfilePage {
   saveMain() {
     if (!this.selectedMain) return;
     this.saving = true;
-    this.message = "";
 
     this.api.setMain(this.selectedMain.name).subscribe({
       next: () => {
-        this.message = "Saved main successfully!";
         this.saving = false;
+        this.messageService.add({
+          severity: "success",
+          summary: "Saved!",
+          detail: "Your main character has been updated.",
+          life: 3000,
+        });
       },
       error: () => {
-        this.message = "Error saving main. Try again later!";
         this.saving = false;
+        this.messageService.add({
+          severity: "error",
+          summary: "Error",
+          detail: "Failed to save. Please try again.",
+          life: 3000,
+        });
       },
     });
   }

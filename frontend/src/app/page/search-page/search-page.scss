@@ -1,138 +1,131 @@
-.page {
-  max-width: 700px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background: #212121;
-  border-radius: 1.5rem;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-  text-align: center;
-  font-family: "Poppins", sans-serif;
+.search-container {
+  max-width: 680px;
+  margin: 2.5rem auto;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-h1 {
-  font-size: 2rem;
+.search-header {
+  padding: 1.5rem 1.5rem 0;
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #e0e0e0;
+    margin-bottom: 0.25rem;
+  }
+
+  p {
+    color: #666;
+    font-size: 0.88rem;
+    margin: 0;
+  }
+}
+
+.selected-section {
+  margin-top: 1.25rem;
+}
+
+.selected-label {
+  font-size: 0.78rem;
   font-weight: 700;
-  margin-bottom: 1.5rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 0.6rem;
 }
 
-.selected-characters {
+.chips-row {
   display: flex;
-  justify-content: center;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin: 2rem 0;
-
-  .char-icon {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: #303030;
-    border-radius: 1rem;
-    padding: 0.75rem;
-    transition:
-      transform 0.2s,
-      box-shadow 0.2s;
-    width: 90px;
-
-    &:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    img {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin-bottom: 0.5rem;
-    }
-
-    span {
-      font-size: 0.85rem;
-      font-weight: 500;
-    }
-  }
+  gap: 0.5rem;
 }
 
-.actions {
+.search-actions {
   display: flex;
   justify-content: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-
-  button {
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    border: none;
-    border-radius: 0.75rem;
-    cursor: pointer;
-    color: white;
-    transition: all 0.2s ease;
-
-    &:hover:not(:disabled) {
-      transform: translateY(-2px);
-    }
-
-    &:disabled {
-      background: #adb5bd;
-      cursor: not-allowed;
-    }
-
-    &.stop {
-      background: linear-gradient(135deg, #dc3545, #b02a37);
-
-      &:hover {
-        background: linear-gradient(135deg, #c82333, #9f1f2b);
-      }
-    }
-  }
 }
 
-.match-result {
-  background: #1e2e24;
-  border: 2px solid #3a6e50;
-  border-radius: 1rem;
-  padding: 1.5rem;
-  margin-top: 2rem;
+.searching-state {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.match-card {
+  border: 1px solid rgba(76, 175, 80, 0.25) !important;
+}
+
+.match-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.25rem 1.5rem 0;
+
+  .match-icon {
+    font-size: 1.4rem;
+    color: #4caf50;
+  }
 
   h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
     color: #4caf50;
-    margin-bottom: 1rem;
-  }
-
-  .opponent {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-
-    img {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      border: 3px solid #4caf50;
-      cursor: pointer;
-    }
-
-    p {
-      font-size: 1rem;
-      font-weight: 500;
-      color: #a5d6a7;
-    }
+    margin: 0;
   }
 }
 
-.message {
-  margin-top: 1.5rem;
-  font-size: 0.95rem;
-  color: #aaa;
-  font-style: italic;
+.opponent-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  border-radius: 0.75rem;
+  padding: 0.25rem;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
 }
 
-.error-message {
-  margin-top: 1.5rem;
-  font-size: 0.95rem;
-  color: #dc3545;
-  font-style: italic;
+.opponent-avatar {
+  flex-shrink: 0;
+  border: 2px solid rgba(76, 175, 80, 0.4);
+  border-radius: 50%;
+}
+
+.opponent-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.opponent-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #e0e0e0;
+}
+
+.opponent-main {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #a5d6a7;
+  font-size: 0.88rem;
+  font-weight: 500;
+
+  img {
+    border-radius: 3px;
+    object-fit: cover;
+  }
+}
+
+.open-icon {
+  color: #444;
+  font-size: 0.85rem;
+  margin-left: auto;
 }

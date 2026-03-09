@@ -1,22 +1,43 @@
-<nav class="navbar">
-    <div class="navbar-logo">
-        <img src="./logo.png" alt="Smashups Logo" />
+<p-toolbar class="app-navbar">
+  <ng-template #start>
+    <a routerLink="/home" class="navbar-brand">
+      <img src="./logo.png" alt="SmashUps" height="38" />
+      <span class="brand-name">SmashUps</span>
+    </a>
+  </ng-template>
+
+  <ng-template #center>
+    <div class="nav-links">
+      <a routerLink="/home" routerLinkActive="active-link" class="nav-link">Home</a>
+      <a routerLink="/search" routerLinkActive="active-link" class="nav-link">Search</a>
     </div>
-    <ul>
-        <li><a [routerLink]="['/home']">Home</a></li>
-        <li><a [routerLink]="['/history']">History</a></li>
-    </ul>
-    <div class="navbar-actions">
-        @if (user) {
-        <div class="user-info">
-            <img [routerLink]="['/profile']" [src]="avatarUrl" class="avatar" />
-            <span class="username">{{ user.username }}</span>
-            <button class="logout-btn" (click)="logout()">Logout</button>
-        </div>
-        } @else {
-        <button (click)="loginWithDiscord()" class="btn btn-primary">
-            Login with Discord
-        </button>
-        }
-    </div>
-</nav>
+  </ng-template>
+
+  <ng-template #end>
+    @if (user) {
+      <div class="user-section">
+        <p-avatar
+          [image]="avatarUrl"
+          shape="circle"
+          size="normal"
+          class="user-avatar"
+          [routerLink]="['/profile']"
+        />
+        <span class="username">{{ user.username }}</span>
+        <p-button
+          label="Logout"
+          severity="secondary"
+          size="small"
+          [outlined]="true"
+          (onClick)="logout()"
+        />
+      </div>
+    } @else {
+      <p-button
+        label="Login with Discord"
+        icon="pi pi-discord"
+        (onClick)="loginWithDiscord()"
+      />
+    }
+  </ng-template>
+</p-toolbar>
