@@ -2,6 +2,7 @@ import { Injectable, OnDestroy } from "@angular/core";
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { BehaviorSubject, Observable, of, tap } from "rxjs";
 import { io, Socket } from "socket.io-client";
+import { environment } from "../../environments/environment";
 
 export interface User {
   discordId: string;
@@ -40,7 +41,7 @@ export interface PendingMatch {
   providedIn: "root",
 })
 export class Api implements OnDestroy {
-  private apiUrl = "http://localhost:3000";
+  private apiUrl = environment.apiUrl;
   private userSubject = new BehaviorSubject<User | null>(null);
   user$ = this.userSubject.asObservable();
 

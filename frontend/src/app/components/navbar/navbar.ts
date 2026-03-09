@@ -4,6 +4,7 @@ import { RouterLink, RouterLinkActive } from "@angular/router";
 import { Toolbar } from "primeng/toolbar";
 import { Button } from "primeng/button";
 import { Avatar } from "primeng/avatar";
+import { environment } from "../../../environments/environment";
 
 @Component({
   selector: "app-navbar",
@@ -23,7 +24,7 @@ export class Navbar implements OnInit {
   }
 
   loginWithDiscord() {
-    window.location.href = "http://localhost:3000/auth/discord";
+    window.location.href = `${environment.apiUrl}/auth/discord`;
   }
 
   logout() {
