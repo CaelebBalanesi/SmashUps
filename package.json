@@ -14,9 +14,13 @@
     "start:frontend": "npm run start --workspace=frontend",
     "dev:backend": "npm run dev --workspace=backend",
     "build:backend": "npm run build --workspace=backend",
-    "build:frontend": "npm run build --workspace=frontend"
+    "build:frontend": "npm run build --workspace=frontend",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "changeset version && npm install"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.30.0",
     "concurrently": "^9.2.1"
   }
 }
